@@ -87,7 +87,6 @@ Mỗi record được lưu trong một file JSON riêng biệt với cấu trúc
 
    - ID tăng dần từ 1
    - Tự động khôi phục counter khi restart
-   - Thread-safe với mutex
 
 2. **Tự động quản lý thời gian**
 
@@ -103,10 +102,6 @@ Mỗi record được lưu trong một file JSON riêng biệt với cấu trúc
        ├── 2.json       # Record với ID = 2
        └── ...
    ```
-
-4. **Thread-safe**
-   - Sử dụng mutex cho mỗi collection
-   - An toàn khi có nhiều goroutine
 
 ## Lưu ý
 

@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -23,8 +22,6 @@ var (
 
 // Driver là đối tượng tương tác với cơ sở dữ liệu scribble
 type Driver struct {
-	mutex   sync.Mutex
-	mutexes map[string]*sync.Mutex
 	dir     string           // thư mục chứa database
 	counter map[string]int64 // bộ đếm cho từng collection
 }
@@ -42,7 +39,6 @@ func New(dir string) (*Driver, error) {
 
 	driver := Driver{
 		dir:     dir,
-		mutexes: make(map[string]*sync.Mutex),
 		counter: make(map[string]int64),
 	}
 
@@ -113,10 +109,6 @@ func (d *Driver) Write(collection string, v interface{}) error {
 		"data":   v,
 	}
 
-	mutex := d.getOrCreateMutex(collection)
-	mutex.Lock()
-	defer mutex.Unlock()
-
 	dir := filepath.Join(d.dir, collection)
 	fnlPath := filepath.Join(dir, record.ID+".json")
 	tmpPath := fnlPath + ".tmp"
@@ -167,10 +159,6 @@ func (d *Driver) Update(collection string, id string, v interface{}) error {
 	data.Data = v
 
 	// Ghi lại vào file
-	mutex := d.getOrCreateMutex(collection)
-	mutex.Lock()
-	defer mutex.Unlock()
-
 	dir := filepath.Join(d.dir, collection)
 	fnlPath := filepath.Join(dir, id+".json")
 	tmpPath := fnlPath + ".tmp"
@@ -184,10 +172,6 @@ func (d *Driver) Delete(collection, id string) error {
 		return ErrMissingCollection
 	}
 
-	mutex := d.getOrCreateMutex(collection)
-	mutex.Lock()
-	defer mutex.Unlock()
-
 	dir := filepath.Join(d.dir, collection)
 	path := filepath.Join(dir, id+".json")
 
@@ -196,9 +180,6 @@ func (d *Driver) Delete(collection, id string) error {
 
 // nextID tạo ID tiếp theo cho collection
 func (d *Driver) nextID(collection string) int64 {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
-
 	d.counter[collection]++
 	return d.counter[collection]
 }
@@ -231,18 +212,4 @@ func read(record string, v interface{}) error {
 	}
 
 	return json.Unmarshal(b, v)
-}
-
-func (d *Driver) getOrCreateMutex(collection string) *sync.Mutex {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
-
-	m, ok := d.mutexes[collection]
-
-	if !ok {
-		m = &sync.Mutex{}
-		d.mutexes[collection] = m
-	}
-
-	return m
 }

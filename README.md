@@ -14,9 +14,7 @@ scribble-demo/
 
 - Lưu trữ dữ liệu dưới dạng file JSON
 - Tự động tạo ID và quản lý thời gian
-- Thread-safe với mutex
 - API đơn giản, dễ sử dụng
-- Không cần cài đặt database server
 
 ## Hướng dẫn chạy demo
 
